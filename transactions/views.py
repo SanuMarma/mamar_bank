@@ -110,6 +110,46 @@ class WithdrawMoneyView(TransactionCreateMixin):
         send_transaction_email(self.request.user, amount, "Withdrawal Message", "transactions/withdrawal_email.html")
         return super().form_valid(form)
 
+
+class SendMoneyView(TransactionCreateMixin):
+    form_class = SendMoneyForm
+    template_name = "transactions/send_money.html"
+    title = "Send Money"
+    success_url = reverse_lazy("transaction_report")
+
+    def get_initial(self):
+        initial = {"transaction_type": SEND_MONEY}
+        return initial
+
+    def form_valid(self, form):
+        account_no = form.cleaned_data.get("account_no")
+        amount = form.cleaned_data.get("amount")
+        sender = self.request.user.account
+        
+        if amount > sender.balance:
+            messages.warning(self.request, "Insufficient balance")
+        else:
+            reciver = UserBankAccount.objects.filter(account_no=account_no).first()
+            if not reciver:
+                messages.error(self.request, "account not found")
+            else:
+
+                reciver.balance += amount
+                sender.balance -= amount
+                reciver.save(update_fields=["balance"])
+                sender.save(update_fields=["balance"])
+
+                messages.success(
+                    self.request,
+                    f'Successfully transferred {"{:,.2f}".format(float(amount))}$ to account {account_no}'
+                )
+                send_transaction_email(self.request.user, amount, "Send Money Message", "transactions/sendmoney_email.html")
+                send_transaction_email(reciver, amount, "Send Money Message", "transactions/sendmoney_email.html")
+        
+                return super().form_valid(form)
+        return super().form_invalid(form)
+    
+
 class LoanRequestView(TransactionCreateMixin):
     form_class = LoanRequestForm
     title = 'Request For Loan'
@@ -201,38 +241,3 @@ class LoanListView(LoginRequiredMixin,ListView):
         queryset = Transaction.objects.filter(account=user_account,transaction_type=3)
         return queryset
     
-
-class SendMoneyView(TransactionCreateMixin):
-    form_class = SendMoneyForm
-    template_name = "transactions/send_money.html"
-    title = "Send Money"
-    success_url = reverse_lazy("transaction_report")
-
-    def get_initial(self):
-        initial = {"transaction_type": SEND_MONEY}
-        return initial
-
-    def form_valid(self, form):
-        account_no = form.cleaned_data.get("account_no")
-        amount = form.cleaned_data.get("amount")
-        sender = self.request.user.account
-        
-        if amount > sender.balance:
-            messages.warning(self.request, "Insufficient balance")
-        else:
-            reciver = UserBankAccount.objects.filter(account_no=account_no).first()
-            if not reciver:
-                messages.error(self.request, "account not found")
-            else:
-
-                reciver.balance += amount
-                sender.balance -= amount
-                reciver.save(update_fields=["balance"])
-                sender.save(update_fields=["balance"])
-
-                messages.success(
-                    self.request,
-                    f'Successfully transferred {"{:,.2f}".format(float(amount))}$ to account {account_no}'
-                )
-                return super().form_valid(form)
-        return super().form_invalid(form)
