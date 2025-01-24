@@ -10,7 +10,9 @@
 </div>
 {% endfor %} {% endif %}
 <div class="bg-white px-3 py-4 rounded-xl my-6">
-
+    <div class="mb-4">
+    <a href="{% url 'pass_change' %}" class="bg-blue-900 text-white rounded-lg hover:bg-white hover:text-blue-900 hover:border-blue-900 shadow hover:shadow-lg py-2 px-4 border border-gray-900 hover:border-transparent">Change Your Password</a>
+    </div>
     <h4 class="font-bold text-3xl text-left pb-5">Account NO: {{request.user.account.account_no}}</h4>
     <h1 class="font-bold text-3xl text-center pb-5">Update Profile Information</h1>
     <div class="w-full mt-10">
