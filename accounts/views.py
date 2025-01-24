@@ -7,6 +7,8 @@ from django.views import View
 from django.contrib import messages
 from django.urls import reverse_lazy
 
+from django.views import generic
+
 # Create your views here.
 class UserRegistrationView(FormView):
     template_name = 'accounts/user_registration.html'
@@ -25,11 +27,16 @@ class UserLoginView(LoginView):
     def get_success_url(self):
         return reverse_lazy('home')
     
-class UserLogoutView(LogoutView):
-    def get_success_url(self):
-        if self.request.user.is_authenticated:
-            logout(self.request)
-        return reverse_lazy('home')
+# class UserLogoutView(LogoutView):
+#     def get_success_url(self):
+#         if self.request.user.is_authenticated:
+#             logout(self.request)
+#         return reverse_lazy('home')
+    
+class UserLogoutView(generic.View):
+    def get(self, request):
+        logout(request)
+        return redirect('home')
     
 
 # class UserLogoutView(LogoutView):
